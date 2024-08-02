@@ -29,6 +29,7 @@ const App = () => {
   const [openTrash, setOpenTrash] = React.useState(false);
   const [openAddCategoryModal, setOpenAddCategoryModal] = React.useState(false);
   const [pantry, setPantry] = React.useState([]);
+  const [categories, setCategories] = React.useState(["liquid", "veggies"]);
   const [newItem, setNewItem] = React.useState({
     name: "",
     quantity: 1,
@@ -52,9 +53,12 @@ const App = () => {
   const addItemToPantry = async (e) => {
     e.preventDefault();
     if (newItem.name !== "" && newItem.category !== "") {
-      setPantry([...pantry, newItem]);
+      setPantry((prevPantry) => {
+        const updatedPantry = [...prevPantry, newItem];
+        console.log("Updated pantry:", updatedPantry);
+        return updatedPantry;
+      });
     }
-    console.log("pantry", pantry);
   };
 
   //read item
@@ -155,6 +159,8 @@ const App = () => {
                   <CategoryDropdown
                     newItem={newItem}
                     setNewItem={setNewItem}
+                    categories={categories}
+                    setCategories={setCategories}
                     openAddCategoryModal={openAddCategoryModal}
                     setOpenAddCategoryModal={setOpenAddCategoryModal}
                   />
