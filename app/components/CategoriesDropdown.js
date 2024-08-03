@@ -12,12 +12,14 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "../firebase";
+import { toast } from "react-toastify";
 
 const CategoriesDropdown = ({
   newItem,
   setNewItem,
   categories,
-  setCategories,
   openAddCategoryModal,
   setOpenAddCategoryModal,
 }) => {
@@ -25,8 +27,10 @@ const CategoriesDropdown = ({
     setNewItem({ ...newItem, category: event.target.value });
   };
 
-  const handleAdd = (newCategory) => {
-    setCategories((prevCategories) => [...prevCategories, newCategory]);
+  const handleAdd = async (newCategory) => {
+    await addDoc(collection(db, "categories"), {
+      name: newCategory.trim(),
+    });
   };
 
   return (
@@ -38,8 +42,8 @@ const CategoriesDropdown = ({
           handleAdd={handleAdd}
         />
       )}
-      <FormControl sx={{ m: 1, minWidth: 160 }} size="small">
-        <InputLabel id="demo-select-small-label">Category</InputLabel>
+      <FormControl sx={{ minWidth: 160 }} size="small">
+        <InputLabel id="demo-select-small-label">Select category*</InputLabel>
         <Select
           labelId="demo-select-small-label"
           id="demo-select-small"
@@ -49,8 +53,12 @@ const CategoriesDropdown = ({
           required
         >
           {categories.map((category) => (
-            <MenuItem key={category} value={category}>
-              {category}
+            <MenuItem
+              key={category.id}
+              value={category.name}
+              sx={{ textTransform: "capitalize" }}
+            >
+              {category.name}
             </MenuItem>
           ))}
         </Select>
@@ -76,7 +84,9 @@ const AddCategoryModal = ({ open, setOpen, handleAdd }) => {
     if (newCategory.trim() !== "") {
       handleAdd(newCategory);
       handleClose();
+      toast.success("Successfully added category!");
     }
+    if (newCategory === "") console.log("name is required");
   };
 
   const style = {
@@ -109,11 +119,16 @@ const AddCategoryModal = ({ open, setOpen, handleAdd }) => {
           id="outlined-basic"
           label="Name"
           variant="outlined"
+          required
           className="my-4 w-full"
           value={newCategory}
           onChange={(e) => setNewCategory(e.target.value)}
         />
-        <Button variant="contained" onClick={handleAddCategory}>
+        <Button
+          disabled={newCategory === ""}
+          variant="contained"
+          onClick={handleAddCategory}
+        >
           Add
         </Button>
       </FormControl>

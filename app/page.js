@@ -1,103 +1,158 @@
 "use client";
 import * as React from "react";
 import CssBaseline from "@mui/material/CssBaseline";
-import EventAvailableIcon from "@mui/icons-material/EventAvailable";
-import { Container, Button, TextField } from "@mui/material";
-import Link from "@mui/material/Link";
-import Grid from "@mui/material/Grid";
+import { Container } from "@mui/material";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Copyright from "./components/Footer";
-import Counter from "./components/Counter";
-import CategoryDropdown from "./components/CategoriesDropdown";
 import LeftDrawer from "./components/LeftDrawer";
 import LunchDiningIcon from "@mui/icons-material/LunchDining";
-import AllPantryItems from "./components/folders/AllPantry";
-import NewPantryItems from "./components/folders/NewPantry";
-import OldPantryItems from "./components/folders/OldPantry";
-import PantryForReplacement from "./components/folders/Replacement";
-import Trash from "./components/folders/Trash";
-import { collection, addDoc } from "firebase/firestore";
+import AllPantryItems from "./components/AllPantry";
+import {
+  collection,
+  addDoc,
+  query,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+import { db } from "./firebase";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import AddPantry from "./components/AddPantry";
 
 const App = () => {
   const [open, setOpen] = React.useState(false);
   const [openAll, setOpenAll] = React.useState(false);
-  const [openNew, setOpenNew] = React.useState(false);
-  const [openOld, setOpenOld] = React.useState(false);
-  const [openReplacements, setOpenReplacements] = React.useState(false);
-  const [openTrash, setOpenTrash] = React.useState(false);
   const [openAddCategoryModal, setOpenAddCategoryModal] = React.useState(false);
   const [pantry, setPantry] = React.useState([]);
-  const [categories, setCategories] = React.useState(["liquid", "veggies"]);
+  const [categories, setCategories] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [loadingRows, setLoadingRows] = React.useState({});
+  const [openEditModal, setOpenEditModal] = React.useState(false);
   const [newItem, setNewItem] = React.useState({
     name: "",
     quantity: 1,
     category: "",
   });
 
-  const handleOpenAll = () => setOpenAll(true);
-  const handleOpenNew = () => setOpenNew(true);
-  const handleOpenOld = () => setOpenOld(true);
-  const handleOpenReplacements = () => setOpenReplacements(true);
-  const handleOpenTrash = () => setOpenTrash(true);
   const handleOpenAddCategoryModal = () => setOpenAddCategoryModal(true);
-
   const defaultTheme = createTheme();
 
   const toggleDrawer = (newOpen) => () => {
     setOpen(newOpen);
   };
 
+  const formValidation = () => {
+    if (newItem.name === "" && newItem.category === "") {
+      toast.error("fill in all fields!");
+      return;
+    } else setLoading(true);
+  };
+
   //add item
   const addItemToPantry = async (e) => {
     e.preventDefault();
+    formValidation();
     if (newItem.name !== "" && newItem.category !== "") {
-      setPantry((prevPantry) => {
-        const updatedPantry = [...prevPantry, newItem];
-        console.log("Updated pantry:", updatedPantry);
-        return updatedPantry;
+      await addDoc(collection(db, "pantry"), {
+        name: newItem.name.trim(),
+        quantity: newItem.quantity,
+        category: newItem.category.trim(),
+        createdAt: new Date(),
       });
+      setNewItem({ name: "", quantity: 1, category: "" });
+      setLoading(false);
+      toast.success("Item added to pantry!");
     }
   };
 
-  //read item
+  //read items
+  const getItemsFromPantry = async () => {
+    const itemsQuery = query(collection(db, "pantry"));
+    onSnapshot(itemsQuery, (QuerySnapshot) => {
+      let pantryArr = [];
+
+      QuerySnapshot.forEach((doc) => {
+        pantryArr.push({
+          ...doc.data(),
+          id: doc.id,
+        });
+      });
+      setPantry(pantryArr);
+    });
+  };
+
+  //read categories
+  const getCategories = async () => {
+    const categoriesQuery = query(collection(db, "categories"));
+    onSnapshot(categoriesQuery, (QuerySnapshot) => {
+      let categoriesArr = [];
+
+      QuerySnapshot.forEach((doc) => {
+        categoriesArr.push({
+          ...doc.data(),
+          id: doc.id,
+        });
+      });
+      setCategories(categoriesArr);
+    });
+  };
+
+  React.useEffect(() => {
+    getCategories();
+    getItemsFromPantry();
+  }, []);
 
   // delete item
+  const handleDelete = async (id) => {
+    setLoadingRows((prev) => ({ ...prev, [id]: true }));
+    await deleteDoc(doc(db, "pantry", id));
+    setLoadingRows((prev) => ({ ...prev, [id]: false }));
+    toast.success("Deleted successfully");
+  };
+
+  //delete categoey
+  const handleDeleteCategory = async (id) => {
+    await deleteDoc(doc(db, "categories", id));
+    toast.success("Deleted");
+  };
+
+  //update item
+  const handleUpdateItem = async (id, updatedData) => {
+    const itemRef = doc(db, "pantry", id);
+    await updateDoc(itemRef, updatedData);
+    toast.success("Item updated successfully");
+  };
 
   return (
     <ThemeProvider theme={defaultTheme}>
       <Container component="main">
+        <ToastContainer position="top-center" autoClose={1000} />
         <CssBaseline />
         {open && (
           <LeftDrawer
             open={open}
             toggleDrawer={toggleDrawer}
-            handleOpenAll={handleOpenAll}
-            handleOpenNew={handleOpenNew}
-            handleOpenOld={handleOpenOld}
-            handleOpenReplacements={handleOpenReplacements}
-            handleOpenTrash={handleOpenTrash}
+            categories={categories}
+            handleDeleteCategory={handleDeleteCategory}
           />
         )}
         {openAll && (
-          <AllPantryItems openAll={openAll} setOpenAll={setOpenAll} />
-        )}
-        {openNew && (
-          <NewPantryItems openNew={openNew} setOpenNew={setOpenNew} />
-        )}
-        {openOld && (
-          <OldPantryItems openOld={openOld} setOpenOld={setOpenOld} />
-        )}
-        {openReplacements && (
-          <PantryForReplacement
-            openReplacements={openReplacements}
-            setOpenReplacements={setOpenReplacements}
+          <AllPantryItems
+            openAll={openAll}
+            setOpenAll={setOpenAll}
+            data={pantry}
+            handleDelete={handleDelete}
+            loading={loadingRows}
+            handleUpdateItem={handleUpdateItem}
+            setOpenEditModal={setOpenEditModal}
+            openEditModal={openEditModal}
+            categories={categories}
           />
         )}
-        {openTrash && (
-          <Trash openTrash={openTrash} setOpenTrash={setOpenTrash} />
-        )}
+        {/**menu icon */}
         <Box
           sx={{
             position: "absolute",
@@ -109,101 +164,20 @@ const App = () => {
         >
           <LunchDiningIcon className="text-[30px] opacity-90" />
         </Box>
-        <Box
-          sx={{
-            marginTop: 16,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <EventAvailableIcon
-            sx={{ m: 2, height: 40, width: 40 }}
-          ></EventAvailableIcon>
-          <Typography component="h1" variant="h5">
-            Pantry Tracker
-          </Typography>
-          <Box
-            component="form"
-            onSubmit={addItemToPantry}
-            noValidate
-            sx={{ mt: 1 }}
-          >
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="name"
-              label="Add pantry item"
-              name="name"
-              value={newItem.name}
-              onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-              autoFocus
-            />
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  width: "100%",
-                  justifyContent: "center",
-                }}
-              >
-                <Box sx={{ width: "45%" }}>
-                  <CategoryDropdown
-                    newItem={newItem}
-                    setNewItem={setNewItem}
-                    categories={categories}
-                    setCategories={setCategories}
-                    openAddCategoryModal={openAddCategoryModal}
-                    setOpenAddCategoryModal={setOpenAddCategoryModal}
-                  />
-                </Box>
-                <Box sx={{ width: "55%" }}>
-                  <Counter newItem={newItem} setNewItem={setNewItem} />
-                </Box>
-              </Box>
-              <Box
-                sx={{
-                  width: "100%",
-                  paddingY: "4px",
-                  textDecoration: "underline",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                }}
-                onClick={handleOpenAddCategoryModal}
-              >
-                Create category
-              </Box>
-            </Box>
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-            >
-              Add
-            </Button>
-            <Grid container>
-              <Grid item xs>
-                <Link href="#" variant="body2" onClick={toggleDrawer(true)}>
-                  Folders
-                </Link>
-              </Grid>
-              <Grid item>
-                <Link href="#" variant="body2" onClick={toggleDrawer(true)}>
-                  Pantry Categories
-                </Link>
-              </Grid>
-            </Grid>
-          </Box>
-        </Box>
+
+        <AddPantry
+          addItemToPantry={addItemToPantry}
+          newItem={newItem}
+          setNewItem={setNewItem}
+          categories={categories}
+          setCategories={setCategories}
+          openAddCategoryModal={openAddCategoryModal}
+          setOpenAddCategoryModal={setOpenAddCategoryModal}
+          handleOpenAddCategoryModal={handleOpenAddCategoryModal}
+          loading={loading}
+          setOpenAll={setOpenAll}
+          toggleDrawer={toggleDrawer}
+        />
         <Copyright sx={{ mt: 8, mb: 4 }} />
       </Container>
     </ThemeProvider>

@@ -2,115 +2,68 @@ import * as React from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
-import Divider from "@mui/material/Divider";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import CloseIcon from "@mui/icons-material/Close";
-import DensitySmallIcon from "@mui/icons-material/DensitySmall";
-import FiberNewIcon from "@mui/icons-material/FiberNew";
-import FolderIcon from "@mui/icons-material/Folder";
-import AutorenewIcon from "@mui/icons-material/Autorenew";
-import FolderDeleteIcon from "@mui/icons-material/FolderDelete";
 import CategoryIcon from "@mui/icons-material/Category";
 import { Typography } from "@mui/material";
 
-export default function LeftDrawer({
+const LeftDrawer = ({
   open,
   toggleDrawer,
-  handleOpenAll,
-  handleOpenNew,
-  handleOpenOld,
-  handleOpenReplacements,
-  handleOpenTrash,
-}) {
-  const categories = ["bread", "canned foods"];
-  const DrawerList = (
-    <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
-      {/**folders */}
-      <List>
-        <Typography className="font-bold text-gray-500 px-1 mt-5">
-          Folders
-        </Typography>{" "}
-        {/**all */}
-        <ListItem onClick={handleOpenAll} disablePadding>
-          <ListItemButton>
-            <ListItemIcon>
-              <DensitySmallIcon />
-            </ListItemIcon>
-            <ListItemText primary={"All"} />
-          </ListItemButton>
-        </ListItem>
-        {/**new pantry */}
-        <ListItem onClick={handleOpenNew} disablePadding>
-          <ListItemButton>
-            <ListItemIcon>
-              <FiberNewIcon />
-            </ListItemIcon>
-            <ListItemText primary={"New Pantry"} />
-          </ListItemButton>
-        </ListItem>
-        {/**old pantry */}
-        <ListItem onClick={handleOpenOld} disablePadding>
-          <ListItemButton>
-            <ListItemIcon>
-              <FolderIcon />
-            </ListItemIcon>
-            <ListItemText primary={"Old Pantry"} />
-          </ListItemButton>
-        </ListItem>
-        {/**used pantry */}
-        <ListItem onClick={handleOpenReplacements} disablePadding>
-          <ListItemButton>
-            <ListItemIcon>
-              <AutorenewIcon />
-            </ListItemIcon>
-            <ListItemText primary={"For Replacement"} />
-          </ListItemButton>
-        </ListItem>
-        {/**trash */}
-        <ListItem onClick={handleOpenTrash} disablePadding>
-          <ListItemButton>
-            <ListItemIcon>
-              <FolderDeleteIcon />
-            </ListItemIcon>
-            <ListItemText primary={"Trash"} />
-          </ListItemButton>
-        </ListItem>
-      </List>
-      <Divider />
-      {/**categories */}
-      <List>
-        <Typography className="font-bold text-gray-500 px-1 mt-5">
-          Pantry Categories
-        </Typography>
-        {categories.length === 0 && (
-          <div className="text-sm px-2 py-3">No categories yet</div>
-        )}
-        {categories.length &&
-          categories.map((text, index) => (
-            <ListItem key={text} className="capitalize" disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  <CategoryIcon />
-                </ListItemIcon>
-                <Box className="flex items-center">
-                  <ListItemText>{text}</ListItemText>
-                  <CloseIcon className="ml-5 p-[5px] cursor-pointer" />
-                </Box>
-              </ListItemButton>
-            </ListItem>
-          ))}
-      </List>
-    </Box>
-  );
+  categories,
+  handleDeleteCategory,
+}) => {
+  const drawerWidth = 240;
 
   return (
-    <div>
-      <Drawer open={open} onClose={toggleDrawer(false)}>
-        {DrawerList}
+    <Box sx={{ display: "flex" }}>
+      <Drawer
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: drawerWidth,
+            boxSizing: "border-box",
+          },
+        }}
+        variant="permanent"
+        anchor="left"
+        open={open}
+        onClose={toggleDrawer(false)}
+      >
+        <List>
+          <Typography
+            variant="h5"
+            className="font-bold text-gray-500 px-1 mt-5 mb-5"
+          >
+            Pantry Categories
+          </Typography>
+          {categories.length === 0 && (
+            <div className="text-sm px-2 py-3">No categories yet</div>
+          )}
+          {categories.length &&
+            categories.map((category) => (
+              <ListItem key={category.id} className="capitalize" disablePadding>
+                <ListItemButton>
+                  <ListItemIcon>
+                    <CategoryIcon />
+                  </ListItemIcon>
+                  <Box className="flex items-center justify-between w-full">
+                    <ListItemText>{category.name}</ListItemText>
+                    <CloseIcon
+                      className="ml-5 p-[5px] cursor-pointer"
+                      onClick={() => handleDeleteCategory(category.id)}
+                    />
+                  </Box>
+                </ListItemButton>
+              </ListItem>
+            ))}
+        </List>
       </Drawer>
-    </div>
+    </Box>
   );
-}
+};
+export default LeftDrawer;
