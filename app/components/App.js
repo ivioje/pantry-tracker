@@ -138,7 +138,7 @@ const App = () => {
           variant="contained"
           onClick={() => setOpenCapture(!openCapture)}
         >
-          Scan Pantry
+          Scan Pantry Item
         </Button>
         {openCapture && <CaptureImage />}
         {open && (
