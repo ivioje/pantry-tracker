@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import Counter from "./Counter";
 import CategoriesDropdown from "./CategoriesDropdown";
