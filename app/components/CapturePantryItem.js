@@ -1,8 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import Webcam from "react-webcam";
 
 const CaptureImage = () => {
   const webcamRef = useRef(null);
+  const [showError, setShowError] = useState(false);
 
   const capture = async () => {
     const imageSrc = webcamRef.current.getScreenshot();
