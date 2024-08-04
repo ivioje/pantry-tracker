@@ -6,7 +6,7 @@ import Modal from "@mui/material/Modal";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import { Delete } from "@mui/icons-material";
 import UpgradeIcon from "@mui/icons-material/Upgrade";
-import { CircularProgress } from "@mui/material";
+import { CircularProgress, TextField } from "@mui/material";
 import EditItemModal from "./EditPantryItem";
 
 const AllPantryItems = ({
@@ -21,6 +21,7 @@ const AllPantryItems = ({
   categories,
 }) => {
   const [newItem, setNewItem] = React.useState(data);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   const handleClose = () => setOpenAll(false);
 
@@ -92,12 +93,16 @@ const AllPantryItems = ({
     },
   ];
 
-  const rows = data.map((item) => ({
-    id: item.id,
-    name: toTitleCase(item.name),
-    quantity: item.quantity,
-    category: toTitleCase(item.category),
-  }));
+  const rows = data
+    .map((item) => ({
+      id: item.id,
+      name: toTitleCase(item.name),
+      quantity: item.quantity,
+      category: toTitleCase(item.category),
+    }))
+    .filter((item) =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <div>
@@ -124,6 +129,14 @@ const AllPantryItems = ({
           <Typography className="mb-5 text-sm">
             Find all your pantry items here!
           </Typography>
+          <TextField
+            variant="outlined"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
           <div style={{ height: 400, width: "100%" }}>
             <DataGrid
               rows={rows}
